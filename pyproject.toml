@@ -1,0 +1,10 @@
+[tool.black]
+line-length = 79
+target-version = ['py310']
+skip-string-normalization = true
+extend-exclude = 'migrations'
+
+[tool.flake8]
+exclude = ['tests/', '*/migrations/', 'venv/']
+per-file-ignores = ['*/settings.py:E501']
+max-complexity = 10
