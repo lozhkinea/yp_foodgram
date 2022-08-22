@@ -1,7 +1,9 @@
-from django.urls import path
-
-from . import views
+from django.urls import include, path
 
 app_name = 'users'
 
-urlpatterns = []
+
+urlpatterns = [
+    path('', include('djoser.urls')),
+    path('auth/', include('djoser.urls.authtoken')),
+]
