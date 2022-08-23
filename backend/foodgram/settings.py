@@ -138,7 +138,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
+    # 'DEFAULT_PERMISSION_CLASSES': [
+    #     'rest_framework.permissions.IsAuthenticated',
+    # ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
-    ),
+    ],
+}
+
+
+DJOSER = {
+    # 'PERMISSIONS': {
+    #     'token_create': ['rest_framework.permissions.AllowAny'],
+    #     'token_destroy': ['rest_framework.permissions.IsAuthenticated'],
+    # },
 }
