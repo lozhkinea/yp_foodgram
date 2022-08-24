@@ -1,11 +1,10 @@
+from django.contrib.auth import get_user_model
 from djoser import utils, views
 from djoser.conf import settings
 from rest_framework import status
 from rest_framework.response import Response
 
-from users.models import User
-
-settings.LOGIN_FIELD = User.EMAIL_FIELD
+settings.LOGIN_FIELD = get_user_model().EMAIL_FIELD
 
 
 class CustomTokenCreateView(views.TokenCreateView):
