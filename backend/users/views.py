@@ -7,7 +7,7 @@ from rest_framework.response import Response
 settings.LOGIN_FIELD = get_user_model().EMAIL_FIELD
 
 
-class CustomTokenCreateView(views.TokenCreateView):
+class TokenCreateView(views.TokenCreateView):
     """
     Use this endpoint to obtain user authentication token.
     """

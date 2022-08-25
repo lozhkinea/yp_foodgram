@@ -7,6 +7,7 @@ app_name = 'recipes'
 
 router = SimpleRouter()
 router.register('ingredients', views.IngredientViewSet)
+router.register('recipes', views.RecipeViewSet)
 router.register('tags', views.TagViewSet)
 
 

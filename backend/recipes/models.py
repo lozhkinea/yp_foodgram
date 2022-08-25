@@ -52,7 +52,6 @@ class Recipe(models.Model):
             MinValueValidator(1),
         ],
     )
-    pub_date = models.DateTimeField()
 
     class Meta:
         ordering = ['name']
