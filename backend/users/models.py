@@ -13,3 +13,30 @@ class User(AbstractUser):
         'first_name',
         'last_name',
     ]
+
+
+class Subscription(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='subscribers',
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='subscribes',
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'], name='unique_subscribe)'
+            ),
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('author')),
+                name='self_subscribe',
+            ),
+        ]
+        ordering = ['user']
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'

@@ -42,7 +42,11 @@ class Recipe(models.Model):
         Ingredient, through='IngredientsAmount'
     )
     tags = models.ManyToManyField(Tag)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='recipes',
+    )
     name = models.CharField('Название', max_length=200)
     image = models.ImageField('Картинка')
     text = models.TextField('Описание')
@@ -66,32 +70,6 @@ class IngredientsAmount(models.Model):
     amount = models.PositiveIntegerField('Количество')
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-
-
-class Subscription(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='subscriber',
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-    )
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'author'], name='unique_subscribe)'
-            ),
-            models.CheckConstraint(
-                check=~models.Q(user=models.F('author')),
-                name='self_subscribe',
-            ),
-        ]
-        ordering = ['user']
-        verbose_name = 'Подписка'
-        verbose_name_plural = 'Подписки'
 
 
 class ShoppingCart(models.Model):

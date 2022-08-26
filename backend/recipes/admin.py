@@ -5,7 +5,6 @@ from .models import (
     Ingredient,
     Recipe,
     ShoppingCart,
-    Subscription,
     Tag,
 )
 
@@ -57,16 +56,6 @@ class ShoppingCartAdmin(admin.ModelAdmin):
     empty_value_display = '-пусто-'
 
 
-class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = (
-        'user',
-        'author',
-    )
-    search_fields = ('user', 'author')
-    list_filter = ('user', 'author')
-    empty_value_display = '-пусто-'
-
-
 class TagAdmin(admin.ModelAdmin):
     list_display = (
         'name',
@@ -82,5 +71,4 @@ admin.site.register(Favotites, FavotitesAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(ShoppingCart, ShoppingCartAdmin)
-admin.site.register(Subscription, SubscriptionAdmin)
 admin.site.register(Tag, TagAdmin)
