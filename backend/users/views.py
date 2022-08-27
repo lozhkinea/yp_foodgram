@@ -5,6 +5,7 @@ from djoser import utils, views
 from djoser.conf import settings
 from rest_framework import serializers, status
 from rest_framework.decorators import action
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 
 from .models import Subscription
@@ -28,14 +29,16 @@ class TokenCreateView(views.TokenCreateView):
 
 
 class UserViewSet(views.UserViewSet):
+    pagination_class = LimitOffsetPagination
+
     @action(
         methods=['post', 'delete'],
         detail=True,  # permission_classes=[IsAdminOrIsSelf],
     )
     def subscribe(self, request, id=None):
-        SUBSCRIPTION_NOT_FOUND = {'errors': 'Ошибка: подписка не существует'}
-        SELF_SUBSCRIPTION = {'errors': 'Ошибка: подписка на самого себя!'}
-        RE_SUBSCRIPTION = {'errors': 'Ошибка: повторная подписка'}
+        SUBSCRIPTION_NOT_FOUND = {'errors': 'Подписка не найдена.'}
+        SELF_SUBSCRIPTION = {'errors': 'Подписка на самого себя.'}
+        RE_SUBSCRIPTION = {'errors': 'Подписка уже существует.'}
         author = get_object_or_404(User, id=id)
         if request.method == 'POST':
             if author == request.user:
