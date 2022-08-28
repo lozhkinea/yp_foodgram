@@ -39,7 +39,7 @@ class Ingredient(models.Model):
 
 class Recipe(models.Model):
     ingredients = models.ManyToManyField(
-        Ingredient, through='IngredientsAmount'
+        Ingredient, through='RecipesIngredient'
     )
     tags = models.ManyToManyField(Tag)
     author = models.ForeignKey(
@@ -66,10 +66,35 @@ class Recipe(models.Model):
         return self.name
 
 
-class IngredientsAmount(models.Model):
+class RecipesIngredient(models.Model):
     amount = models.PositiveIntegerField('Количество')
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(
+        Ingredient,
+        on_delete=models.CASCADE,
+        related_name='ingredient_to_recipe',
+    )
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE, related_name='recipe_to_ingredient'
+    )
+
+
+class Favotite(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='fav_user_to_recipe'
+    )
+    recipe = models.ForeignKey(
+        Recipe, on_delete=models.CASCADE, related_name='fav_recipe_to_user'
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'], name='unique_favotites)'
+            ),
+        ]
+        ordering = ['user']
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
 
 
 class ShoppingCart(models.Model):
@@ -91,24 +116,3 @@ class ShoppingCart(models.Model):
         ordering = ['user']
         verbose_name = 'Корзина'
         verbose_name_plural = 'Корзина'
-
-
-class Favotites(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-    )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-    )
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['user', 'recipe'], name='unique_favotites)'
-            ),
-        ]
-        ordering = ['user']
-        verbose_name = 'Избранное'
-        verbose_name_plural = 'Избранное'

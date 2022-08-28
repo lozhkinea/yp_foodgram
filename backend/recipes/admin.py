@@ -1,16 +1,16 @@
 from django.contrib import admin
 
 from .models import (
-    Favotites,
+    Favotite,
     Ingredient,
     Recipe,
     ShoppingCart,
     Tag,
-    IngredientsAmount,
+    RecipesIngredient,
 )
 
 
-class FavotitesAdmin(admin.ModelAdmin):
+class FavotiteAdmin(admin.ModelAdmin):
     list_display = (
         'user',
         'recipe',
@@ -70,9 +70,9 @@ class TagAdmin(admin.ModelAdmin):
     empty_value_display = '-пусто-'
 
 
-admin.site.register(Favotites, FavotitesAdmin)
+admin.site.register(Favotite, FavotiteAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(ShoppingCart, ShoppingCartAdmin)
 admin.site.register(Tag, TagAdmin)
-admin.site.register(IngredientsAmount)
+admin.site.register(RecipesIngredient)
