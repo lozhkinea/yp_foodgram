@@ -79,17 +79,15 @@ class RecipesIngredient(models.Model):
 
 
 class Favotite(models.Model):
-    user = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='fav_user_to_recipe'
-    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     recipe = models.ForeignKey(
-        Recipe, on_delete=models.CASCADE, related_name='fav_recipe_to_user'
+        Recipe, on_delete=models.CASCADE, related_name='favorite'
     )
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'recipe'], name='unique_favotites)'
+                fields=['user', 'recipe'], name='unique_fav_recipes)'
             ),
         ]
         ordering = ['user']
@@ -99,18 +97,16 @@ class Favotite(models.Model):
 
 class ShoppingCart(models.Model):
     user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
+        User, on_delete=models.CASCADE, related_name='users_shopping_cart'
     )
     recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
+        Recipe, on_delete=models.CASCADE, related_name='shopping_cart'
     )
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'recipe'], name='unique_shopping)'
+                fields=['user', 'recipe'], name='unique_cart_recipes)'
             ),
         ]
         ordering = ['user']

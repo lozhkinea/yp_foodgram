@@ -4,9 +4,9 @@ from .models import (
     Favotite,
     Ingredient,
     Recipe,
+    RecipesIngredient,
     ShoppingCart,
     Tag,
-    RecipesIngredient,
 )
 
 
@@ -39,12 +39,22 @@ class IngredientAdmin(admin.ModelAdmin):
 
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
-        'id',
         'name',
         'author',
+        'id',
     )
     search_fields = ('name', 'author')
     list_filter = ('name', 'author', 'tags')
+    empty_value_display = '-пусто-'
+
+
+class RecipesIngredientAdmin(admin.ModelAdmin):
+    list_display = (
+        'recipe',
+        'ingredient',
+        'amount',
+        'id',
+    )
     empty_value_display = '-пусто-'
 
 
@@ -75,4 +85,4 @@ admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(ShoppingCart, ShoppingCartAdmin)
 admin.site.register(Tag, TagAdmin)
-admin.site.register(RecipesIngredient)
+admin.site.register(RecipesIngredient, RecipesIngredientAdmin)

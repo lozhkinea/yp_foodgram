@@ -1,12 +1,16 @@
+from django.contrib.auth import get_user_model
+from django.db.models import Sum
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, permissions
-from rest_framework import serializers as drf_slzrs
-from rest_framework import status, viewsets
+from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.serializers import ValidationError
 
 from . import serializers
 from .models import Ingredient, Recipe, Tag
+
+User = get_user_model()
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -40,15 +44,63 @@ class RecipeViewSet(viewsets.ModelViewSet):
         NOT_FOUND = {'errors': 'Рецепт в избранном не найден.'}
         recipe = get_object_or_404(Recipe, id=pk)
         if request.method == 'POST':
-            if recipe.fav_recipe_to_user.filter(user=request.user).exists():
-                raise drf_slzrs.ValidationError(ALREADY_EXIST)
-            recipe.fav_recipe_to_user.create(user=request.user)
+            if recipe.favorite.filter(user=request.user).exists():
+                raise ValidationError(ALREADY_EXIST)
+            recipe.favorite.create(user=request.user)
             serializer = serializers.FavoriteSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
-            if not recipe.fav_recipe_to_user.filter(
-                user=request.user
-            ).exists():
-                raise drf_slzrs.ValidationError(NOT_FOUND)
-            recipe.fav_recipe_to_user.filter(user=request.user).delete()
+            if not recipe.favorite.filter(user=request.user).exists():
+                raise ValidationError(NOT_FOUND)
+            recipe.favorite.filter(user=request.user).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        methods=['post', 'delete'],
+        detail=True,
+        permission_classes=(permissions.IsAuthenticated,),
+    )
+    def shopping_cart(self, request, pk):
+        ALREADY_EXIST = {'errors': 'Рецепт уже есть в списке покупок.'}
+        NOT_FOUND = {'errors': 'Рецепт в списке покупок не найден.'}
+        recipe = get_object_or_404(Recipe, id=pk)
+        if request.method == 'POST':
+            if recipe.shopping_cart.filter(user=request.user).exists():
+                raise ValidationError(ALREADY_EXIST)
+            recipe.shopping_cart.create(user=request.user)
+            serializer = serializers.FavoriteSerializer(recipe)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if request.method == 'DELETE':
+            if not recipe.shopping_cart.filter(user=request.user).exists():
+                raise ValidationError(NOT_FOUND)
+            recipe.shopping_cart.filter(user=request.user).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        methods=['get'],
+        detail=False,
+        permission_classes=(permissions.AllowAny,),
+    )
+    def download_shopping_cart(self, request):
+        print('=' * 80)
+        name = 'users_shopping_cart__recipe__recipe_to_ingredient__ingredient__name'
+        amount = 'users_shopping_cart__recipe__recipe_to_ingredient__amount'
+        unit = 'users_shopping_cart__recipe__recipe_to_ingredient__ingredient__measurement_unit'
+        ingerdients_in_cart = (
+            User.objects.filter(id=15)
+            .annotate(weight=Sum(amount))
+            .values(name, 'weight', unit)
+        )
+        text = ''
+        for i in ingerdients_in_cart:
+            text += f'{i[name].capitalize()} ({i[unit]}) - {i["weight"]} \n'
+        print(text)
+        print('=' * 80)
+        response = HttpResponse(
+            text,
+            headers={
+                'Content-Type': 'text/plain; charset=UTF-8',
+                'Content-Disposition': 'attachment; filename="shopping_cart.txt"',
+            },
+        )
+        return response
