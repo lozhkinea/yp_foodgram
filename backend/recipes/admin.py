@@ -1,10 +1,10 @@
 from django.contrib import admin
 
 from .models import (
-    Favotite,
+    Favorite,
     Ingredient,
     Recipe,
-    RecipesIngredient,
+    RecipeIngredient,
     ShoppingCart,
     Tag,
 )
@@ -48,7 +48,7 @@ class RecipeAdmin(admin.ModelAdmin):
     empty_value_display = '-пусто-'
 
 
-class RecipesIngredientAdmin(admin.ModelAdmin):
+class RecipeIngredientAdmin(admin.ModelAdmin):
     list_display = (
         'recipe',
         'ingredient',
@@ -80,9 +80,9 @@ class TagAdmin(admin.ModelAdmin):
     empty_value_display = '-пусто-'
 
 
-admin.site.register(Favotite, FavotiteAdmin)
+admin.site.register(Favorite, FavotiteAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(ShoppingCart, ShoppingCartAdmin)
 admin.site.register(Tag, TagAdmin)
-admin.site.register(RecipesIngredient, RecipesIngredientAdmin)
+admin.site.register(RecipeIngredient, RecipeIngredientAdmin)

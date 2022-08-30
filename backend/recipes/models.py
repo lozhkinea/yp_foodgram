@@ -39,7 +39,7 @@ class Ingredient(models.Model):
 
 class Recipe(models.Model):
     ingredients = models.ManyToManyField(
-        Ingredient, through='RecipesIngredient'
+        Ingredient, through='RecipeIngredient'
     )
     tags = models.ManyToManyField(Tag)
     author = models.ForeignKey(
@@ -66,19 +66,15 @@ class Recipe(models.Model):
         return self.name
 
 
-class RecipesIngredient(models.Model):
+class RecipeIngredient(models.Model):
     amount = models.PositiveIntegerField('Количество')
-    ingredient = models.ForeignKey(
-        Ingredient,
-        on_delete=models.CASCADE,
-        related_name='ingredient_to_recipe',
-    )
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     recipe = models.ForeignKey(
-        Recipe, on_delete=models.CASCADE, related_name='recipe_to_ingredient'
+        Recipe, on_delete=models.CASCADE, related_name='recipe_ingredients'
     )
 
 
-class Favotite(models.Model):
+class Favorite(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     recipe = models.ForeignKey(
         Recipe, on_delete=models.CASCADE, related_name='favorite'

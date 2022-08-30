@@ -29,7 +29,12 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    serializer_class = serializers.RecipeSerializer
+
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return serializers.RecipeListSerializer
+        else:
+            return serializers.RecipeSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -83,9 +88,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         print('=' * 80)
-        name = 'users_shopping_cart__recipe__recipe_to_ingredient__ingredient__name'
-        amount = 'users_shopping_cart__recipe__recipe_to_ingredient__amount'
-        unit = 'users_shopping_cart__recipe__recipe_to_ingredient__ingredient__measurement_unit'
+        name = (
+            'users_shopping_cart__recipe__recipe_ingredients__ingredient__name'
+        )
+        amount = 'users_shopping_cart__recipe__recipe_ingredients__amount'
+        unit = 'users_shopping_cart__recipe__recipe_ingredients__ingredient__measurement_unit'
         ingerdients_in_cart = (
             User.objects.filter(id=15)
             .annotate(weight=Sum(amount))
@@ -93,9 +100,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
         text = ''
         for i in ingerdients_in_cart:
-            text += f'{i[name].capitalize()} ({i[unit]}) - {i["weight"]} \n'
-        print(text)
-        print('=' * 80)
+            text += f'{i[name]} ({i[unit]}) - {i["weight"]} \n'.capitalize()
         response = HttpResponse(
             text,
             headers={
