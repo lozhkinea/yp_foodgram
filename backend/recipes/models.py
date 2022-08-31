@@ -57,6 +57,10 @@ class Recipe(models.Model):
         ],
     )
 
+    @property
+    def favorited_count(self):
+        return self.favorite.count()
+
     class Meta:
         ordering = ['name']
         verbose_name = 'Рецепт'

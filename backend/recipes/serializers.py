@@ -28,13 +28,24 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit')
 
 
-class RecipeIngredientSerializer(serializers.ModelSerializer):
-    # id = serializers.IntegerField(source='ingredient_id')
-
+class RecipeIngredientListSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeIngredient
         fields = (
             'ingredient',
+            'amount',
+        )
+
+
+class RecipeIngredientSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(
+        source='ingredient', queryset=Ingredient.objects.all()
+    )
+
+    class Meta:
+        model = RecipeIngredient
+        fields = (
+            'id',
             'amount',
         )
 
@@ -84,9 +95,8 @@ class RecipeListSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    ingredients = IngredientSerializer(many=True, read_only=True)
-    tags = TagSerializer(many=True)
-    image = serializers.ImageField()
+    ingredients = RecipeIngredientSerializer(many=True)
+    image = Base64ImageField()
 
     class Meta:
         model = Recipe
@@ -98,6 +108,26 @@ class RecipeSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time',
         )
+
+    def create(self, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        print('3 =-=-=-=', validated_data)
+        recipe = super().create(validated_data)
+        for item in ingredients:
+            current = get_object_or_404(Ingredient, id=item['ingredient'].id)
+            RecipeIngredient.objects.create(
+                recipe=recipe, ingredient=current, amount=item['amount']
+            )
+        return recipe
+
+    def to_representation(self, instance):
+        print('to_representation in')
+        fields = self._readable_fields
+        for field in fields:
+            print('---', field)
+        recipe = super().to_representation(instance)
+        print('to_representation out')
+        return recipe
 
 
 class FavoriteSerializer(serializers.ModelSerializer):

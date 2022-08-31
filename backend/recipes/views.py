@@ -36,8 +36,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
         else:
             return serializers.RecipeSerializer
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        print('===', serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
+
     def perform_create(self, serializer):
+        print('perform_create in')
         serializer.save(author=self.request.user)
+        print('perform_create out')
 
     @action(
         methods=['post', 'delete'],

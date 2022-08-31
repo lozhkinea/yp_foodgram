@@ -59,7 +59,9 @@ class UserViewSet(views.UserViewSet):
         subscribes = User.objects.prefetch_related(
             Prefetch(
                 'subscribes',
-                queryset=Subscription.objects.filter(user=request.user).all(),
+                queryset=Subscription.objects.select_related('author').filter(
+                    user=request.user
+                ),
             )
         )
         page = self.paginate_queryset(subscribes)

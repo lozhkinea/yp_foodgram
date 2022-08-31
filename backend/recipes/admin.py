@@ -41,6 +41,7 @@ class RecipeAdmin(admin.ModelAdmin):
     list_display = (
         'name',
         'author',
+        'favorited_count',
         'id',
     )
     search_fields = ('name', 'author')
