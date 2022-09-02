@@ -28,15 +28,6 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit')
 
 
-class RecipeIngredientListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RecipeIngredient
-        fields = (
-            'ingredient',
-            'amount',
-        )
-
-
 class RecipeIngredientSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         source='ingredient', queryset=Ingredient.objects.all()
@@ -88,14 +79,25 @@ class RecipeListSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         recipe = super().to_representation(instance)
         recipe_ingredients = recipe.pop('recipe_ingredients')
-        d = {item['ingredient']: item['amount'] for item in recipe_ingredients}
+        d = {item['id']: item['amount'] for item in recipe_ingredients}
         for i, ingredient in enumerate(recipe['ingredients']):
             recipe['ingredients'][i]['amount'] = d[ingredient['id']]
         return recipe
 
 
+class IngredientRecipeSerializer(serializers.ModelSerializer):
+    amount = serializers.IntegerField()
+
+    class Meta:
+        model = Ingredient
+        fields = (
+            'id',
+            'amount',
+        )
+
+
 class RecipeSerializer(serializers.ModelSerializer):
-    ingredients = RecipeIngredientSerializer(many=True)
+    ingredients = RecipeIngredientSerializer(many=True, write_only=True)
     image = Base64ImageField()
 
     class Meta:
@@ -111,22 +113,14 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
-        print('3 =-=-=-=', validated_data)
         recipe = super().create(validated_data)
         for item in ingredients:
-            current = get_object_or_404(Ingredient, id=item['ingredient'].id)
-            RecipeIngredient.objects.create(
-                recipe=recipe, ingredient=current, amount=item['amount']
+            ingredient = get_object_or_404(
+                Ingredient, id=item['ingredient'].id
             )
-        return recipe
-
-    def to_representation(self, instance):
-        print('to_representation in')
-        fields = self._readable_fields
-        for field in fields:
-            print('---', field)
-        recipe = super().to_representation(instance)
-        print('to_representation out')
+            RecipeIngredient.objects.create(
+                recipe=recipe, ingredient=ingredient, amount=item['amount']
+            )
         return recipe
 
 

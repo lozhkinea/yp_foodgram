@@ -39,17 +39,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
+        instance = self.perform_create(serializer)
+        list_serializer = serializers.RecipeListSerializer(
+            instance=instance, context={'request': request}
+        )
         headers = self.get_success_headers(serializer.data)
-        print('===', serializer.data)
         return Response(
-            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+            list_serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers,
         )
 
     def perform_create(self, serializer):
-        print('perform_create in')
-        serializer.save(author=self.request.user)
-        print('perform_create out')
+        return serializer.save(author=self.request.user)
 
     @action(
         methods=['post', 'delete'],
@@ -99,7 +101,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(permissions.AllowAny,),
     )
     def download_shopping_cart(self, request):
-        print('=' * 80)
         name = (
             'users_shopping_cart__recipe__recipe_ingredients__ingredient__name'
         )
