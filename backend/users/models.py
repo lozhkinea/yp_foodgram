@@ -4,15 +4,16 @@ from django.utils.translation import gettext_lazy as _
 
 
 class User(AbstractUser):
-    email = models.EmailField(_("email address"), max_length=254)
-    first_name = models.CharField(_("first name"), max_length=150)
-    last_name = models.CharField(_("last name"), max_length=150)
+    email = models.EmailField(_('email address'), max_length=254)
+    first_name = models.CharField(_('first name'), max_length=150)
+    last_name = models.CharField(_('last name'), max_length=150)
 
-    REQUIRED_FIELDS = [
-        'email',
-        'first_name',
-        'last_name',
-    ]
+    REQUIRED_FIELDS = ('email', 'first_name', 'last_name')
+
+    class Meta:
+        ordering = ('username',)
+        verbose_name = _('user')
+        verbose_name_plural = _('users')
 
 
 class Subscription(models.Model):
@@ -20,11 +21,13 @@ class Subscription(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='subscribers',
+        verbose_name=_('user'),
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='subscribes',
+        verbose_name='Автор',
     )
 
     class Meta:
@@ -33,10 +36,9 @@ class Subscription(models.Model):
                 fields=['user', 'author'], name='unique_subscribe)'
             ),
             models.CheckConstraint(
-                check=~models.Q(user=models.F('author')),
-                name='self_subscribe',
+                check=~models.Q(user=models.F('author')), name='self_subscribe'
             ),
         ]
-        ordering = ['user']
+        ordering = ('user', 'author')
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'

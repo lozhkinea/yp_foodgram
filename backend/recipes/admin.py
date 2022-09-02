@@ -11,79 +11,38 @@ from .models import (
 
 
 class FavotiteAdmin(admin.ModelAdmin):
-    list_display = (
-        'user',
-        'recipe',
-    )
-    search_fields = (
-        'user',
-        'recipe',
-    )
-    list_filter = (
-        'user',
-        'recipe',
-    )
-    empty_value_display = '-пусто-'
+    list_display = ('recipe', 'user', 'id')
+    list_filter = ('recipe', 'user')
 
 
 class IngredientAdmin(admin.ModelAdmin):
-    list_display = (
-        'name',
-        'measurement_unit',
-        'id',
-    )
-    search_fields = ('name',)
+    list_display = ('name', 'measurement_unit', 'id')
     list_filter = ('name',)
-    empty_value_display = '-пусто-'
 
 
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = (
-        'name',
-        'author',
-        'favorited_count',
-        'id',
-    )
-    search_fields = ('name', 'author')
-    list_filter = ('name', 'author', 'tags')
-    empty_value_display = '-пусто-'
+    list_display = ('name', 'author', 'favorited_count', 'id')
+    list_filter = ('name', 'author')
 
 
 class RecipeIngredientAdmin(admin.ModelAdmin):
-    list_display = (
-        'recipe',
-        'ingredient',
-        'amount',
-        'id',
-    )
-    empty_value_display = '-пусто-'
+    list_display = ('ingredient', 'amount', 'recipe', 'id')
+    list_filter = ('recipe',)
 
 
 class ShoppingCartAdmin(admin.ModelAdmin):
-    list_display = (
-        'user',
-        'recipe',
-    )
-    search_fields = ('user', 'recipe')
-    list_filter = ('user', 'recipe')
-    empty_value_display = '-пусто-'
+    list_display = ('recipe', 'user', 'id')
+    list_filter = ('recipe', 'user')
 
 
 class TagAdmin(admin.ModelAdmin):
-    list_display = (
-        'name',
-        'color',
-        'slug',
-        'id',
-    )
-    search_fields = ('name', 'color', 'slug')
+    list_display = ('name', 'color', 'slug', 'id')
     list_filter = ('name', 'color', 'slug')
-    empty_value_display = '-пусто-'
 
 
 admin.site.register(Favorite, FavotiteAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Recipe, RecipeAdmin)
+admin.site.register(RecipeIngredient, RecipeIngredientAdmin)
 admin.site.register(ShoppingCart, ShoppingCartAdmin)
 admin.site.register(Tag, TagAdmin)
-admin.site.register(RecipeIngredient, RecipeIngredientAdmin)
