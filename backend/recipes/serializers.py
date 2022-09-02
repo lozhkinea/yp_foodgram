@@ -1,9 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from users.serializers import UserSerializer
 
+from .fields import Base64ImageField
 from .models import (
     Favorite,
     Ingredient,
@@ -25,7 +25,7 @@ class TagSerializer(serializers.ModelSerializer):
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = ('id', 'name', 'measurement_unit')
+        fields = "__all__"
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
@@ -83,17 +83,6 @@ class RecipeListSerializer(serializers.ModelSerializer):
         for i, ingredient in enumerate(recipe['ingredients']):
             recipe['ingredients'][i]['amount'] = d[ingredient['id']]
         return recipe
-
-
-class IngredientRecipeSerializer(serializers.ModelSerializer):
-    amount = serializers.IntegerField()
-
-    class Meta:
-        model = Ingredient
-        fields = (
-            'id',
-            'amount',
-        )
 
 
 class RecipeSerializer(serializers.ModelSerializer):
