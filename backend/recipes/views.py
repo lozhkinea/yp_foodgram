@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
-from . import serializers
+from . import pagination, serializers
 from .models import Ingredient, Recipe, Tag
 
 User = get_user_model()
@@ -29,6 +29,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
+    pagination_class = pagination.RecipePagination
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
@@ -101,24 +102,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(permissions.AllowAny,),
     )
     def download_shopping_cart(self, request):
-        name = (
-            'users_shopping_cart__recipe__recipe_ingredients__ingredient__name'
-        )
-        amount = 'users_shopping_cart__recipe__recipe_ingredients__amount'
-        unit = 'users_shopping_cart__recipe__recipe_ingredients__ingredient__measurement_unit'
-        ingerdients_in_cart = (
-            User.objects.filter(id=15)
-            .annotate(weight=Sum(amount))
-            .values(name, 'weight', unit)
-        )
+        FILENAME = 'shopping_cart.txt'
+        INGREDIENTS = 'user_cart__recipe__recipe_ingredients'
+        NAME = f'{INGREDIENTS}__ingredient__name'
+        UNIT = f'{INGREDIENTS}__ingredient__measurement_unit'
+        ingerdients_in_cart = request.user.annotate(
+            weight=Sum(f'{INGREDIENTS}__amount')
+        ).values(NAME, 'weight', UNIT)
         text = ''
         for i in ingerdients_in_cart:
-            text += f'{i[name]} ({i[unit]}) - {i["weight"]} \n'.capitalize()
+            text += f'{i[NAME]} ({i[UNIT]}) - {i["weight"]} \n'.capitalize()
         response = HttpResponse(
             text,
             headers={
                 'Content-Type': 'text/plain; charset=UTF-8',
-                'Content-Disposition': 'attachment; filename="shopping_cart.txt"',
+                'Content-Disposition': f'attachment; filename="{FILENAME}"',
             },
         )
         return response

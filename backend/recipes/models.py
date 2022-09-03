@@ -42,7 +42,7 @@ class Recipe(models.Model):
     ingredients = models.ManyToManyField(
         Ingredient, through='RecipeIngredient', verbose_name='Ингредиенты'
     )
-    tags = models.ManyToManyField(Tag)
+    tags = models.ManyToManyField(Tag, verbose_name='Теги')
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -124,7 +124,7 @@ class ShoppingCart(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='users_shopping_cart',
+        related_name='user_cart',
         verbose_name='Пользователь',
     )
     recipe = models.ForeignKey(
