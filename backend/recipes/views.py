@@ -1,14 +1,20 @@
+import imp
+
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
-from . import pagination, serializers
+from . import serializers
+from .filters import RecipeFilter
 from .models import Ingredient, Recipe, Tag
+from .permissions import IsAdminOrReadOnly, IsOwnerOrAdminOrReadOnly
 
 User = get_user_model()
 
@@ -17,19 +23,24 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = serializers.TagSerializer
     pagination_class = None
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = serializers.IngredientSerializer
     pagination_class = None
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('^name',)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    pagination_class = pagination.RecipePagination
+    pagination_class = LimitOffsetPagination
+    permission_classes = (IsOwnerOrAdminOrReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
@@ -51,7 +62,28 @@ class RecipeViewSet(viewsets.ModelViewSet):
             headers=headers,
         )
 
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=partial
+        )
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+        list_serializer = serializers.RecipeListSerializer(
+            instance=instance, context={'request': request}
+        )
+        return Response(list_serializer.data)
+
     def perform_create(self, serializer):
+        return serializer.save(author=self.request.user)
+
+    def perform_update(self, serializer):
         return serializer.save(author=self.request.user)
 
     @action(

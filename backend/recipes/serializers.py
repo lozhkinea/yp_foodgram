@@ -67,14 +67,18 @@ class RecipeListSerializer(serializers.ModelSerializer):
         )
 
     def get_is_favorited(self, recipe):
-        return Favorite.objects.filter(
-            user=self.context['request'].user, recipe=recipe
-        ).exists()
+        user = self.context['request'].user
+        return (
+            user.is_authenticated
+            and Favorite.objects.filter(user=user, recipe=recipe).exists()
+        )
 
     def get_is_in_shopping_cart(self, recipe):
-        return ShoppingCart.objects.filter(
-            user=self.context['request'].user, recipe=recipe
-        ).exists()
+        user = self.context['request'].user
+        return (
+            user.is_authenticated
+            and ShoppingCart.objects.filter(user=user, recipe=recipe).exists()
+        )
 
     def to_representation(self, instance):
         recipe = super().to_representation(instance)
@@ -102,15 +106,28 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
-        recipe = super().create(validated_data)
+        instance = super().create(validated_data)
         for item in ingredients:
             ingredient = get_object_or_404(
                 Ingredient, id=item['ingredient'].id
             )
             RecipeIngredient.objects.create(
-                recipe=recipe, ingredient=ingredient, amount=item['amount']
+                recipe=instance, ingredient=ingredient, amount=item['amount']
             )
-        return recipe
+        return instance
+
+    def update(self, instance, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        super().update(instance, validated_data)
+        instance.recipe_ingredients.all().delete()
+        for item in ingredients:
+            ingredient = get_object_or_404(
+                Ingredient, id=item['ingredient'].id
+            )
+            RecipeIngredient.objects.create(
+                recipe=instance, ingredient=ingredient, amount=item['amount']
+            )
+        return instance
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
