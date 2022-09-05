@@ -1,6 +1,3 @@
-import imp
-
-from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -15,8 +12,6 @@ from . import serializers
 from .filters import RecipeFilter
 from .models import Ingredient, Recipe, Tag
 from .permissions import IsAdminOrReadOnly, IsOwnerOrAdminOrReadOnly
-
-User = get_user_model()
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -36,11 +31,26 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
     pagination_class = LimitOffsetPagination
     permission_classes = (IsOwnerOrAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
+
+    def _get_filtered_queryset(self, qs, key):
+        match key:
+            case 'is_favorited':
+                return qs.filter(favorite__user=self.request.user)
+            case 'is_in_shopping_cart':
+                return qs.filter(shopping_cart__user=self.request.user)
+
+    def get_queryset(self):
+        queryset = Recipe.objects.all()
+        for key in ('is_favorited', 'is_in_shopping_cart'):
+            if self.request.query_params.get(key):
+                if not self.request.user.is_authenticated:
+                    return Recipe.objects.none()
+                queryset = self._get_filtered_queryset(queryset, key)
+        return queryset
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
@@ -70,11 +80,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
-        if getattr(instance, '_prefetched_objects_cache', None):
-            # If 'prefetch_related' has been applied to a queryset, we need to
-            # forcibly invalidate the prefetch cache on the instance.
-            instance._prefetched_objects_cache = {}
         list_serializer = serializers.RecipeListSerializer(
             instance=instance, context={'request': request}
         )
@@ -91,21 +96,27 @@ class RecipeViewSet(viewsets.ModelViewSet):
         detail=True,
         permission_classes=(permissions.IsAuthenticated,),
     )
-    def favorite(self, request, pk=None):
-        ALREADY_EXIST = {'errors': 'Рецепт уже есть в избранном.'}
-        NOT_FOUND = {'errors': 'Рецепт в избранном не найден.'}
+    def favorite(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
-        if request.method == 'POST':
-            if recipe.favorite.filter(user=request.user).exists():
-                raise ValidationError(ALREADY_EXIST)
-            recipe.favorite.create(user=request.user)
-            serializer = serializers.FavoriteSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        if request.method == 'DELETE':
-            if not recipe.favorite.filter(user=request.user).exists():
-                raise ValidationError(NOT_FOUND)
-            recipe.favorite.filter(user=request.user).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        queryset = recipe.favorite.filter(user=request.user)
+        match request.method:
+            case 'POST':
+                if queryset.exists():
+                    raise ValidationError(
+                        {'errors': 'Рецепт уже есть в избранном.'}
+                    )
+                recipe.favorite.create(user=request.user)
+                serializer = serializers.FavoriteSerializer(recipe)
+                return Response(
+                    serializer.data, status=status.HTTP_201_CREATED
+                )
+            case 'DELETE':
+                if not queryset.exists():
+                    raise ValidationError(
+                        {'errors': 'Рецепт в избранном не найден.'}
+                    )
+                queryset.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
         methods=['post', 'delete'],
@@ -113,19 +124,22 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(permissions.IsAuthenticated,),
     )
     def shopping_cart(self, request, pk):
-        ALREADY_EXIST = {'errors': 'Рецепт уже есть в списке покупок.'}
-        NOT_FOUND = {'errors': 'Рецепт в списке покупок не найден.'}
         recipe = get_object_or_404(Recipe, id=pk)
+        queryset = recipe.shopping_cart.filter(user=request.user)
         if request.method == 'POST':
-            if recipe.shopping_cart.filter(user=request.user).exists():
-                raise ValidationError(ALREADY_EXIST)
+            if queryset.exists():
+                raise ValidationError(
+                    {'errors': 'Рецепт уже есть в списке покупок.'}
+                )
             recipe.shopping_cart.create(user=request.user)
             serializer = serializers.FavoriteSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
-            if not recipe.shopping_cart.filter(user=request.user).exists():
-                raise ValidationError(NOT_FOUND)
-            recipe.shopping_cart.filter(user=request.user).delete()
+            if not queryset.exists():
+                raise ValidationError(
+                    {'errors': 'Рецепт в списке покупок не найден.'}
+                )
+            queryset.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
@@ -138,9 +152,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         INGREDIENTS = 'user_cart__recipe__recipe_ingredients'
         NAME = f'{INGREDIENTS}__ingredient__name'
         UNIT = f'{INGREDIENTS}__ingredient__measurement_unit'
-        ingerdients_in_cart = request.user.annotate(
-            weight=Sum(f'{INGREDIENTS}__amount')
-        ).values(NAME, 'weight', UNIT)
+        AMOUNT = f'{INGREDIENTS}__amount'
+        ingerdients_in_cart = request.user.annotate(weight=Sum(AMOUNT)).values(
+            NAME, 'weight', UNIT
+        )
         text = ''
         for i in ingerdients_in_cart:
             text += f'{i[NAME]} ({i[UNIT]}) - {i["weight"]} \n'.capitalize()

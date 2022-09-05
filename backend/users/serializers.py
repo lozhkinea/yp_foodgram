@@ -1,9 +1,8 @@
-from django.contrib.auth import get_user_model
 from djoser import serializers as djoser_srlzrs
 from recipes.models import Recipe
 from rest_framework import serializers
 
-User = get_user_model()
+from .models import User
 
 
 class UserCreateSerializer(djoser_srlzrs.UserCreateSerializer):

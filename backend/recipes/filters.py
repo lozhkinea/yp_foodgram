@@ -1,7 +1,6 @@
-from django.db.models import Count
-from django_filters import CharFilter, FilterSet, ModelChoiceFilter
+from django_filters import CharFilter, FilterSet
 
-from recipes.models import Favorite, Recipe
+from recipes.models import Recipe
 
 
 class RecipeFilter(FilterSet):

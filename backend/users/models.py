@@ -11,7 +11,7 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ('email', 'first_name', 'last_name')
 
     class Meta:
-        ordering = ('username',)
+        ordering = ['username']
         verbose_name = _('user')
         verbose_name_plural = _('users')
 
@@ -39,6 +39,6 @@ class Subscription(models.Model):
                 check=~models.Q(user=models.F('author')), name='self_subscribe'
             ),
         ]
-        ordering = ('user', 'author')
+        ordering = ['user', 'author']
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'

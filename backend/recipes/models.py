@@ -1,17 +1,13 @@
 from colorfield.fields import ColorField
-from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
-
-User = get_user_model()
+from users.models import User
 
 
 class Tag(models.Model):
     name = models.CharField('Название', max_length=200)
     color = ColorField('Цвет', default='#FF0000')
-    slug = models.SlugField(
-        'Уникальный слаг', unique=True, blank=True, null=True
-    )
+    slug = models.SlugField('Уникальный слаг', unique=True)
 
     class Meta:
         ordering = ['name']
@@ -19,7 +15,7 @@ class Tag(models.Model):
         verbose_name_plural = 'Теги'
 
     def __str__(self):
-        return f'{self.name} (цвет {self.color})'
+        return f'{self.name} ({self.slug})'
 
 
 class Ingredient(models.Model):
@@ -52,12 +48,13 @@ class Recipe(models.Model):
     name = models.CharField('Название', max_length=200)
     image = models.ImageField('Картинка', upload_to='recipes/images/')
     text = models.TextField('Описание')
-    cooking_time = models.IntegerField(
+    cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления (в минутах)',
         validators=[
             MinValueValidator(1),
         ],
     )
+    pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
 
     @property
     def favorited_count(self):
@@ -66,7 +63,7 @@ class Recipe(models.Model):
     favorited_count.fget.short_description = "Добавления в избранное"
 
     class Meta:
-        ordering = ['name']
+        ordering = ['-pub_date']
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 
@@ -91,9 +88,6 @@ class RecipeIngredient(models.Model):
         verbose_name = 'Ингредиент рецепта'
         verbose_name_plural = 'Ингредиенты рецепта'
 
-    def __str__(self):
-        return str(self.ingredient)
-
 
 class Favorite(models.Model):
     recipe = models.ForeignKey(
@@ -112,12 +106,9 @@ class Favorite(models.Model):
                 fields=['recipe', 'user'], name='unique_favorite_recipe)'
             ),
         ]
-        ordering = ['recipe']
+        ordering = ['user']
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
-
-    def __str__(self):
-        return str(self.recipe)
 
 
 class ShoppingCart(models.Model):
@@ -141,8 +132,5 @@ class ShoppingCart(models.Model):
             ),
         ]
         ordering = ['user']
-        verbose_name = 'Корзина'
-        verbose_name_plural = 'Корзина'
-
-    def __str__(self):
-        return str(self.recipe)
+        verbose_name = 'Список покупок'
+        verbose_name_plural = 'Списки покупок'
