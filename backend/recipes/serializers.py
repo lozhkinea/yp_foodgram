@@ -1,4 +1,3 @@
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from users.serializers import UserSerializer
 
@@ -100,31 +99,6 @@ class RecipeSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time',
         )
-
-    def create(self, validated_data):
-        ingredients = validated_data.pop('ingredients')
-        instance = super().create(validated_data)
-        for item in ingredients:
-            ingredient = get_object_or_404(
-                Ingredient, id=item['ingredient'].id
-            )
-            RecipeIngredient.objects.create(
-                recipe=instance, ingredient=ingredient, amount=item['amount']
-            )
-        return instance
-
-    def update(self, instance, validated_data):
-        ingredients = validated_data.pop('ingredients')
-        super().update(instance, validated_data)
-        instance.recipe_ingredients.all().delete()
-        for item in ingredients:
-            ingredient = get_object_or_404(
-                Ingredient, id=item['ingredient'].id
-            )
-            RecipeIngredient.objects.create(
-                recipe=instance, ingredient=ingredient, amount=item['amount']
-            )
-        return instance
 
 
 class FavoriteSerializer(serializers.ModelSerializer):

@@ -10,7 +10,7 @@ from rest_framework.serializers import ValidationError
 
 from . import serializers
 from .filters import RecipeFilter
-from .models import Ingredient, Recipe, Tag
+from .models import Ingredient, Recipe, RecipeIngredient, Tag
 from .permissions import IsAdminOrReadOnly, IsOwnerOrAdminOrReadOnly
 
 
@@ -61,11 +61,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        instance = self.perform_create(serializer)
+        instance = self.perform_create_update(serializer)
+        headers = self.get_success_headers(serializer.data)
         list_serializer = serializers.RecipeListSerializer(
             instance=instance, context={'request': request}
         )
-        headers = self.get_success_headers(serializer.data)
         return Response(
             list_serializer.data,
             status=status.HTTP_201_CREATED,
@@ -79,17 +79,35 @@ class RecipeViewSet(viewsets.ModelViewSet):
             instance, data=request.data, partial=partial
         )
         serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
+        self.perform_create_update(serializer)
         list_serializer = serializers.RecipeListSerializer(
             instance=instance, context={'request': request}
         )
         return Response(list_serializer.data)
 
-    def perform_create(self, serializer):
-        return serializer.save(author=self.request.user)
-
-    def perform_update(self, serializer):
-        return serializer.save(author=self.request.user)
+    def perform_create_update(self, serializer):
+        serializer.validated_data['author'] = self.request.user
+        ingredients = serializer.validated_data.pop('ingredients')
+        match self.request.method:
+            case 'POST':
+                serializer.instance = serializer.create(
+                    serializer.validated_data
+                )
+            case 'PUT':
+                serializer.update(
+                    serializer.instance, serializer.validated_data
+                )
+                serializer.instance.recipe_ingredients.all().delete()
+        for item in ingredients:
+            ingredient = get_object_or_404(
+                Ingredient, id=item['ingredient'].id
+            )
+            RecipeIngredient.objects.create(
+                recipe=serializer.instance,
+                ingredient=ingredient,
+                amount=item['amount'],
+            )
+        return serializer.instance
 
     @action(
         methods=['post', 'delete'],
@@ -145,7 +163,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(
         methods=['get'],
         detail=False,
-        permission_classes=(permissions.AllowAny,),
+        permission_classes=(permissions.IsAuthenticated,),
     )
     def download_shopping_cart(self, request):
         FILENAME = 'shopping_cart.txt'
