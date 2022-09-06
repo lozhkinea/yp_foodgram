@@ -10,7 +10,7 @@ from rest_framework.serializers import ValidationError
 
 from . import serializers
 from .filters import RecipeFilter
-from .models import Ingredient, Recipe, RecipeIngredient, Tag
+from .models import Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag
 from .permissions import IsAdminOrReadOnly, IsOwnerOrAdminOrReadOnly
 
 
@@ -167,16 +167,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         FILENAME = 'shopping_cart.txt'
-        INGREDIENTS = 'user_cart__recipe__recipe_ingredients'
-        NAME = f'{INGREDIENTS}__ingredient__name'
-        UNIT = f'{INGREDIENTS}__ingredient__measurement_unit'
-        AMOUNT = f'{INGREDIENTS}__amount'
-        ingerdients_in_cart = request.user.annotate(weight=Sum(AMOUNT)).values(
-            NAME, 'weight', UNIT
+        NAME = 'recipe__recipe_ingredients__ingredient__name'
+        UNIT = 'recipe__recipe_ingredients__ingredient__measurement_unit'
+        AMOUNT = 'recipe__recipe_ingredients__amount'
+        ingerdients_in_cart = (
+            ShoppingCart.objects.filter(user=request.user)
+            .values(NAME)
+            .annotate(weight=Sum(AMOUNT))
+            .values(NAME, 'weight', UNIT)
         )
-        text = ''
+        text = 'Список покупок:\n'
         for i in ingerdients_in_cart:
             text += f'{i[NAME]} ({i[UNIT]}) - {i["weight"]} \n'.capitalize()
+        print(text)
         response = HttpResponse(
             text,
             headers={
