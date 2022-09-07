@@ -34,6 +34,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
     permission_classes = (IsOwnerOrAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
+    # filter_fields = ('tags', 'author')
     filterset_class = RecipeFilter
 
     def _get_filtered_queryset(self, qs, key):
@@ -93,7 +94,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 serializer.instance = serializer.create(
                     serializer.validated_data
                 )
-            case 'PUT':
+            case 'PATCH':
                 serializer.update(
                     serializer.instance, serializer.validated_data
                 )

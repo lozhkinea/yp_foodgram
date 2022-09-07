@@ -100,6 +100,14 @@ class RecipeSerializer(serializers.ModelSerializer):
             'cooking_time',
         )
 
+    def validate(self, data):
+        values = [item['ingredient'].id for item in data['ingredients']]
+        if len(values) != len(set(values)):
+            raise serializers.ValidationError(
+                {'errors': 'Ингредиенты не должны повторяться'}
+            )
+        return data
+
 
 class FavoriteSerializer(serializers.ModelSerializer):
     class Meta:

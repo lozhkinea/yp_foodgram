@@ -20,7 +20,11 @@ class UserViewSet(views.UserViewSet):
     pagination_class = LimitOffsetPagination
     permission_classes = (permissions.IsAuthenticated,)
 
-    @action(methods=['post', 'delete'], detail=True)
+    @action(
+        methods=['post', 'delete'],
+        detail=True,
+        permission_classes=(permissions.IsAuthenticated,),
+    )
     def subscribe(self, request, id):
         author = get_object_or_404(User, id=id)
         queryset = author.subscribes.filter(user=request.user)
@@ -47,9 +51,13 @@ class UserViewSet(views.UserViewSet):
                 queryset.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['get'], detail=False)
+    @action(
+        methods=['get'],
+        detail=False,
+        permission_classes=(permissions.IsAuthenticated,),
+    )
     def subscriptions(self, request):
-        subscribes = User.objects.filter(subscribers__user=request.user).all()
+        subscribes = User.objects.filter(subscribes__user=request.user).all()
         page = self.paginate_queryset(subscribes)
         if page is not None:
             serializer = SubscriptionSerializer(page, many=True)

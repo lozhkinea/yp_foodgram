@@ -1,11 +1,15 @@
-from django_filters import CharFilter, FilterSet
+from django_filters import FilterSet, ModelMultipleChoiceFilter
 
-from recipes.models import Recipe
+from .models import Recipe, Tag
 
 
 class RecipeFilter(FilterSet):
-    tags = CharFilter(field_name='tags', lookup_expr='slug')
+    tags = ModelMultipleChoiceFilter(
+        field_name='tags__slug',
+        to_field_name='slug',
+        queryset=Tag.objects.all(),
+    )
 
     class Meta:
         model = Recipe
-        fields = ('author', 'tags')
+        fields = ('author',)
