@@ -20,11 +20,7 @@ class UserViewSet(views.UserViewSet):
     pagination_class = LimitOffsetPagination
     permission_classes = (permissions.IsAuthenticated,)
 
-    @action(
-        methods=['post', 'delete'],
-        detail=True,
-        permission_classes=(permissions.IsAuthenticated,),
-    )
+    @action(methods=['post', 'delete'], detail=True)
     def subscribe(self, request, id):
         author = get_object_or_404(User, id=id)
         queryset = author.subscribes.filter(user=request.user)
@@ -51,16 +47,14 @@ class UserViewSet(views.UserViewSet):
                 queryset.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(
-        methods=['get'],
-        detail=False,
-        permission_classes=(permissions.IsAuthenticated,),
-    )
+    @action(methods=['get'], detail=False)
     def subscriptions(self, request):
         subscribes = User.objects.filter(subscribes__user=request.user).all()
         page = self.paginate_queryset(subscribes)
-        if page is not None:
-            serializer = SubscriptionSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        serializer = SubscriptionSerializer(subscribes, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = SubscriptionSerializer(page, many=True)
+        recipes_limit = request.query_params.get('recipes_limit')
+        if recipes_limit is not None:
+            recipes_limit = int(recipes_limit)
+            for i, item in enumerate(serializer.data):
+                serializer.data[i]['recipes'] = item['recipes'][:recipes_limit]
+        return self.get_paginated_response(serializer.data)

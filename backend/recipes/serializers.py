@@ -31,10 +31,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RecipeIngredient
-        fields = (
-            'id',
-            'amount',
-        )
+        fields = ('id', 'amount')
 
 
 class RecipeListSerializer(serializers.ModelSerializer):
@@ -63,25 +60,25 @@ class RecipeListSerializer(serializers.ModelSerializer):
         )
 
     def get_is_favorited(self, recipe):
-        user = self.context['request'].user
         return (
-            user.is_authenticated
+            (user := self.context['request'].user)
+            and user.is_authenticated
             and Favorite.objects.filter(user=user, recipe=recipe).exists()
         )
 
     def get_is_in_shopping_cart(self, recipe):
-        user = self.context['request'].user
         return (
-            user.is_authenticated
+            (user := self.context['request'].user)
+            and user.is_authenticated
             and ShoppingCart.objects.filter(user=user, recipe=recipe).exists()
         )
 
     def to_representation(self, instance):
         recipe = super().to_representation(instance)
         recipe_ingredients = recipe.pop('recipe_ingredients')
-        d = {item['id']: item['amount'] for item in recipe_ingredients}
+        amounts = {item['id']: item['amount'] for item in recipe_ingredients}
         for i, ingredient in enumerate(recipe['ingredients']):
-            recipe['ingredients'][i]['amount'] = d[ingredient['id']]
+            recipe['ingredients'][i]['amount'] = amounts[ingredient['id']]
         return recipe
 
 

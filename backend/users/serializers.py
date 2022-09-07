@@ -1,11 +1,11 @@
-from djoser import serializers as djoser_srlzrs
+from djoser import serializers as ds
 from recipes.models import Recipe
 from rest_framework import serializers
 
 from .models import User
 
 
-class UserCreateSerializer(djoser_srlzrs.UserCreateSerializer):
+class UserCreateSerializer(ds.UserCreateSerializer):
     class Meta:
         model = User
         fields = (
@@ -18,7 +18,7 @@ class UserCreateSerializer(djoser_srlzrs.UserCreateSerializer):
         )
 
 
-class UserSerializer(djoser_srlzrs.UserSerializer):
+class UserSerializer(ds.UserSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -47,7 +47,7 @@ class SubscriptionSerializer(UserSerializer):
     recipes_count = serializers.SerializerMethodField()
 
     class Meta:
-        model = User
+        model = UserSerializer.Meta.model
         fields = UserSerializer.Meta.fields + ('recipes', 'recipes_count')
 
     def get_recipes_count(self, user):

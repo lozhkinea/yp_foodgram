@@ -8,22 +8,28 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
-from . import serializers
 from .filters import RecipeFilter
 from .models import Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag
 from .permissions import IsAdminOrReadOnly, IsOwnerOrAdminOrReadOnly
+from .serializers import (
+    FavoriteSerializer,
+    IngredientSerializer,
+    RecipeListSerializer,
+    RecipeSerializer,
+    TagSerializer,
+)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
-    serializer_class = serializers.TagSerializer
+    serializer_class = TagSerializer
     pagination_class = None
     permission_classes = (IsAdminOrReadOnly,)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
-    serializer_class = serializers.IngredientSerializer
+    serializer_class = IngredientSerializer
     pagination_class = None
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
@@ -34,10 +40,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
     permission_classes = (IsOwnerOrAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
-    # filter_fields = ('tags', 'author')
     filterset_class = RecipeFilter
 
     def _get_filtered_queryset(self, qs, key):
+        if qs is None or not self.request.user.is_authenticated:
+            return Recipe.objects.none()
         match key:
             case 'is_favorited':
                 return qs.filter(favorite__user=self.request.user)
@@ -48,23 +55,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
         queryset = Recipe.objects.all()
         for key in ('is_favorited', 'is_in_shopping_cart'):
             if self.request.query_params.get(key):
-                if not self.request.user.is_authenticated:
-                    return Recipe.objects.none()
                 queryset = self._get_filtered_queryset(queryset, key)
         return queryset
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
-            return serializers.RecipeListSerializer
+            return RecipeListSerializer
         else:
-            return serializers.RecipeSerializer
+            return RecipeSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = self.perform_create_update(serializer)
         headers = self.get_success_headers(serializer.data)
-        list_serializer = serializers.RecipeListSerializer(
+        list_serializer = RecipeListSerializer(
             instance=instance, context={'request': request}
         )
         return Response(
@@ -81,7 +86,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
         serializer.is_valid(raise_exception=True)
         self.perform_create_update(serializer)
-        list_serializer = serializers.RecipeListSerializer(
+        list_serializer = RecipeListSerializer(
             instance=instance, context={'request': request}
         )
         return Response(list_serializer.data)
@@ -125,7 +130,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                         {'errors': 'Рецепт уже есть в избранном.'}
                     )
                 recipe.favorite.create(user=request.user)
-                serializer = serializers.FavoriteSerializer(recipe)
+                serializer = FavoriteSerializer(recipe)
                 return Response(
                     serializer.data, status=status.HTTP_201_CREATED
                 )
@@ -151,7 +156,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     {'errors': 'Рецепт уже есть в списке покупок.'}
                 )
             recipe.shopping_cart.create(user=request.user)
-            serializer = serializers.FavoriteSerializer(recipe)
+            serializer = FavoriteSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
             if not queryset.exists():

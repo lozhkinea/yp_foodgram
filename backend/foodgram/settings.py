@@ -21,14 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = getenv('SECRET_KEY')
-SECRET_KEY = (
-    'django-insecure-pydrqq7t1xlj9pmp==nccng27*)(fjm94zg0l9pm$l6i6)$q20'
-)
+SECRET_KEY = getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = bool(int(getenv('DEBUG', '0')))
-DEBUG = True
+DEBUG = bool(int(getenv('DEBUG', '0')))
 
 ALLOWED_HOSTS = ['*']
 
@@ -45,7 +41,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'colorfield',
-    'corsheaders',
     'django_filters',
     'djoser',
     'recipes',
@@ -89,20 +84,14 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': getenv('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': getenv('DB_NAME'),
+        'USER': getenv('POSTGRES_USER'),
+        'PASSWORD': getenv('POSTGRES_PASSWORD'),
+        'HOST': getenv('DB_HOST'),
+        'PORT': getenv('DB_PORT'),
     }
 }
-# DATABASES = {
-#     'default': {
-#         'ENGINE': getenv('DB_ENGINE', 'django.db.backends.postgresql'),
-#         'NAME': getenv('DB_NAME'),
-#         'USER': getenv('POSTGRES_USER'),
-#         'PASSWORD': getenv('POSTGRES_PASSWORD'),
-#         'HOST': getenv('DB_HOST'),
-#         'PORT': getenv('DB_PORT'),
-#     }
-# }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -174,7 +163,3 @@ DJOSER = {
         'current_user': 'users.serializers.UserSerializer',
     },
 }
-
-CORS_ORIGIN_ALLOW_ALL = True
-CORS_URLS_REGEX = r'^/api/.*$'
-CSRF_TRUSTED_ORIGINS = ['http://localhost']

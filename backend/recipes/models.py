@@ -87,6 +87,12 @@ class RecipeIngredient(models.Model):
         ordering = ['recipe']
         verbose_name = 'Ингредиент рецепта'
         verbose_name_plural = 'Ингредиенты рецепта'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['ingredient', 'recipe'],
+                name='unique_ingredient_recipe)',
+            ),
+        ]
 
 
 class Favorite(models.Model):

@@ -3,7 +3,7 @@ from rest_framework import permissions
 
 class IsOwnerOrAdminOrReadOnly(permissions.BasePermission):
     '''
-    Allows to modify to only owner users.
+    Allows to modify only to owners or admin users.
     '''
 
     def has_permission(self, request, view):
