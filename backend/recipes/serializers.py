@@ -11,6 +11,9 @@ from .models import (
     Tag,
 )
 
+IS_FAVORITED = 'is_favorited'
+IS_IN_SHOPPING_CART = 'is_in_shopping_cart'
+
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -50,8 +53,8 @@ class RecipeListSerializer(serializers.ModelSerializer):
             'tags',
             'author',
             'ingredients',
-            'is_favorited',
-            'is_in_shopping_cart',
+            IS_FAVORITED,
+            IS_IN_SHOPPING_CART,
             'name',
             'image',
             'text',

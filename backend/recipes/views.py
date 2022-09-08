@@ -12,6 +12,8 @@ from .filters import RecipeFilter
 from .models import Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag
 from .permissions import IsAdminOrReadOnly, IsOwnerOrAdminOrReadOnly
 from .serializers import (
+    IS_FAVORITED,
+    IS_IN_SHOPPING_CART,
     FavoriteSerializer,
     IngredientSerializer,
     RecipeListSerializer,
@@ -45,15 +47,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def _get_filtered_queryset(self, qs, key):
         if qs is None or not self.request.user.is_authenticated:
             return Recipe.objects.none()
-        match key:
-            case 'is_favorited':
-                return qs.filter(favorite__user=self.request.user)
-            case 'is_in_shopping_cart':
-                return qs.filter(shopping_cart__user=self.request.user)
+        if key == IS_FAVORITED:
+            return qs.filter(favorite__user=self.request.user)
+        if key == IS_IN_SHOPPING_CART:
+            return qs.filter(shopping_cart__user=self.request.user)
 
     def get_queryset(self):
         queryset = Recipe.objects.all()
-        for key in ('is_favorited', 'is_in_shopping_cart'):
+        for key in (IS_FAVORITED, IS_IN_SHOPPING_CART):
             if self.request.query_params.get(key):
                 queryset = self._get_filtered_queryset(queryset, key)
         return queryset
@@ -182,10 +183,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
             .annotate(weight=Sum(AMOUNT))
             .values(NAME, 'weight', UNIT)
         )
+        if len(ingerdients_in_cart) == 0:
+            raise ValidationError(
+                {'errors': 'Сначала добавьте рецепты в список покупок.'}
+            )
         text = 'Список покупок:\n'
         for i in ingerdients_in_cart:
             text += f'{i[NAME]} ({i[UNIT]}) - {i["weight"]} \n'.capitalize()
-        print(text)
         response = HttpResponse(
             text,
             headers={

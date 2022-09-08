@@ -26,7 +26,6 @@ class Ingredient(models.Model):
         indexes = [
             models.Index(fields=['name'], name='name_idx'),
         ]
-        ordering = ['name']
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
 
@@ -36,7 +35,9 @@ class Ingredient(models.Model):
 
 class Recipe(models.Model):
     ingredients = models.ManyToManyField(
-        Ingredient, through='RecipeIngredient', verbose_name='Ингредиенты'
+        Ingredient,
+        through='RecipeIngredient',
+        verbose_name='Ингредиенты',
     )
     tags = models.ManyToManyField(Tag, verbose_name='Теги')
     author = models.ForeignKey(
@@ -72,7 +73,12 @@ class Recipe(models.Model):
 
 
 class RecipeIngredient(models.Model):
-    amount = models.PositiveIntegerField('Количество')
+    amount = models.PositiveIntegerField(
+        'Количество',
+        validators=[
+            MinValueValidator(1),
+        ],
+    )
     ingredient = models.ForeignKey(
         Ingredient, on_delete=models.CASCADE, verbose_name='Ингредиент'
     )

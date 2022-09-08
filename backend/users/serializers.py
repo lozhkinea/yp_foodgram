@@ -32,8 +32,13 @@ class UserSerializer(ds.UserSerializer):
             'is_subscribed',
         )
 
-    def get_is_subscribed(self, user):
-        return user.subscribes.exists()
+    def get_is_subscribed(self, obj):
+
+        return (
+            (user := self.context['request'].user)
+            and user.is_authenticated
+            and user.subscribes.filter(author=obj).exists()
+        )
 
 
 class SubscriptionRecipeSerializer(serializers.ModelSerializer):
