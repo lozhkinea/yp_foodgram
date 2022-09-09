@@ -11,10 +11,15 @@ from rest_framework.serializers import ValidationError
 from .filters import RecipeFilter
 from .models import Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag
 from .permissions import IsAdminOrReadOnly, IsOwnerOrAdminOrReadOnly
-from .serializers import (IS_FAVORITED, IS_IN_SHOPPING_CART,
-                          FavoriteSerializer, IngredientSerializer,
-                          RecipeListSerializer, RecipeSerializer,
-                          TagSerializer)
+from .serializers import (
+    IS_FAVORITED,
+    IS_IN_SHOPPING_CART,
+    FavoriteSerializer,
+    IngredientSerializer,
+    RecipeListSerializer,
+    RecipeSerializer,
+    TagSerializer,
+)
 
 FILENAME = 'shopping_cart.txt'
 NAME = 'recipe__recipe_ingredients__ingredient__name'
@@ -35,7 +40,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
-    search_fields = ('^name',)
+    search_fields = ('name',)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -45,13 +50,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
 
     def _get_filtered_queryset(self, qs, key):
-        if qs is None or not self.request.user.is_authenticated:
-            return Recipe.objects.none()
-        if key == IS_FAVORITED:
-            return qs.filter(favorite__user=self.request.user)
-        if key == IS_IN_SHOPPING_CART:
-            return qs.filter(shopping_cart__user=self.request.user)
-        return None
+        if qs and self.request.user.is_authenticated:
+            if key == IS_FAVORITED:
+                return qs.filter(favorite__user=self.request.user)
+            if key == IS_IN_SHOPPING_CART:
+                return qs.filter(shopping_cart__user=self.request.user)
+        return Recipe.objects.none()
 
     def get_queryset(self):
         queryset = Recipe.objects.all()
@@ -125,25 +129,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def favorite(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
         queryset = recipe.favorite.filter(user=request.user)
-        match request.method:
-            case 'POST':
-                if queryset.exists():
-                    raise ValidationError(
-                        {'errors': 'Рецепт уже есть в избранном.'}
-                    )
-                recipe.favorite.create(user=request.user)
-                serializer = FavoriteSerializer(recipe)
-                return Response(
-                    serializer.data, status=status.HTTP_201_CREATED
+        if request.method == 'DELETE':
+            if not queryset.exists():
+                raise ValidationError(
+                    {'errors': 'Рецепт в избранном не найден.'}
                 )
-            case 'DELETE':
-                if not queryset.exists():
-                    raise ValidationError(
-                        {'errors': 'Рецепт в избранном не найден.'}
-                    )
-                queryset.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-        return None
+            queryset.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        if queryset.exists():
+            raise ValidationError({'errors': 'Рецепт уже есть в избранном.'})
+        recipe.favorite.create(user=request.user)
+        serializer = FavoriteSerializer(recipe)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(
         methods=['post', 'delete'],
@@ -153,14 +150,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
         queryset = recipe.shopping_cart.filter(user=request.user)
-        if request.method == 'POST':
-            if queryset.exists():
-                raise ValidationError(
-                    {'errors': 'Рецепт уже есть в списке покупок.'}
-                )
-            recipe.shopping_cart.create(user=request.user)
-            serializer = FavoriteSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
             if not queryset.exists():
                 raise ValidationError(
@@ -168,7 +157,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 )
             queryset.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        return None
+        if queryset.exists():
+            raise ValidationError(
+                {'errors': 'Рецепт уже есть в списке покупок.'}
+            )
+        recipe.shopping_cart.create(user=request.user)
+        serializer = FavoriteSerializer(recipe)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(
         methods=['get'],

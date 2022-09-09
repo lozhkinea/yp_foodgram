@@ -24,29 +24,26 @@ class UserViewSet(views.UserViewSet):
     def subscribe(self, request, id):
         author = get_object_or_404(User, id=id)
         queryset = author.subscribes.filter(user=request.user)
-        match request.method:
-            case 'POST':
-                if author == request.user:
-                    raise serializers.ValidationError(
-                        {'errors': 'Подписка на самого себя.'}
-                    )
-                if queryset.exists():
-                    raise serializers.ValidationError(
-                        {'errors': 'Подписка уже существует.'}
-                    )
-                author.subscribes.create(user=request.user)
-                serializer = SubscriptionSerializer(author)
-                return Response(
-                    serializer.data, status=status.HTTP_201_CREATED
+        if request.method == 'DELETE':
+            if not queryset.exists():
+                raise serializers.ValidationError(
+                    {'errors': 'Подписка не найдена.'}
                 )
-            case 'DELETE':
-                if not queryset.exists():
-                    raise serializers.ValidationError(
-                        {'errors': 'Подписка не найдена.'}
-                    )
-                queryset.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-        return None
+            queryset.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        if author == request.user:
+            raise serializers.ValidationError(
+                {'errors': 'Подписка на самого себя.'}
+            )
+        if queryset.exists():
+            raise serializers.ValidationError(
+                {'errors': 'Подписка уже существует.'}
+            )
+        author.subscribes.create(user=request.user)
+        serializer = SubscriptionSerializer(
+            author, context={'request': request}
+        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=['get'], detail=False)
     def subscriptions(self, request):

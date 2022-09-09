@@ -33,7 +33,6 @@ class UserSerializer(ds.UserSerializer):
         )
 
     def get_is_subscribed(self, obj):
-
         return (
             (user := self.context['request'].user)
             and user.is_authenticated

@@ -151,4 +151,7 @@ DJOSER = {
     },
 }
 
-CSRF_TRUSTED_ORIGINS = ['http://foodgram-lozhkinea.serveblog.net']
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost',
+    'http://foodgram-lozhkinea.serveblog.net',
+]
