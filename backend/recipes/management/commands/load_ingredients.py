@@ -7,6 +7,9 @@ from pathlib import Path
 from django.core.management.base import BaseCommand, CommandError
 from recipes.models import Ingredient
 
+COL1 = 'name'
+COL2 = 'measurement_unit'
+
 
 class Command(BaseCommand):
     help = 'Загрузка ингредиентов из csv-файлов'
@@ -15,8 +18,6 @@ class Command(BaseCommand):
         parser.add_argument('filepath')
 
     def handle(self, *args, **options):
-        COL1, COL2 = 'name', 'measurement_unit'
-
         Ingredient.objects.all().delete()
         fieldnames = [COL1, COL2]
         csv_filename = Path(options['filepath'])

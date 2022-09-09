@@ -46,6 +46,7 @@ class UserViewSet(views.UserViewSet):
                     )
                 queryset.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
+        return None
 
     @action(methods=['get'], detail=False)
     def subscriptions(self, request):

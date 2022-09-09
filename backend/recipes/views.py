@@ -11,15 +11,15 @@ from rest_framework.serializers import ValidationError
 from .filters import RecipeFilter
 from .models import Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag
 from .permissions import IsAdminOrReadOnly, IsOwnerOrAdminOrReadOnly
-from .serializers import (
-    IS_FAVORITED,
-    IS_IN_SHOPPING_CART,
-    FavoriteSerializer,
-    IngredientSerializer,
-    RecipeListSerializer,
-    RecipeSerializer,
-    TagSerializer,
-)
+from .serializers import (IS_FAVORITED, IS_IN_SHOPPING_CART,
+                          FavoriteSerializer, IngredientSerializer,
+                          RecipeListSerializer, RecipeSerializer,
+                          TagSerializer)
+
+FILENAME = 'shopping_cart.txt'
+NAME = 'recipe__recipe_ingredients__ingredient__name'
+UNIT = 'recipe__recipe_ingredients__ingredient__measurement_unit'
+AMOUNT = 'recipe__recipe_ingredients__amount'
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -51,6 +51,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return qs.filter(favorite__user=self.request.user)
         if key == IS_IN_SHOPPING_CART:
             return qs.filter(shopping_cart__user=self.request.user)
+        return None
 
     def get_queryset(self):
         queryset = Recipe.objects.all()
@@ -142,6 +143,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     )
                 queryset.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
+        return None
 
     @action(
         methods=['post', 'delete'],
@@ -166,6 +168,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 )
             queryset.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+        return None
 
     @action(
         methods=['get'],
@@ -173,10 +176,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         permission_classes=(permissions.IsAuthenticated,),
     )
     def download_shopping_cart(self, request):
-        FILENAME = 'shopping_cart.txt'
-        NAME = 'recipe__recipe_ingredients__ingredient__name'
-        UNIT = 'recipe__recipe_ingredients__ingredient__measurement_unit'
-        AMOUNT = 'recipe__recipe_ingredients__amount'
         ingerdients_in_cart = (
             ShoppingCart.objects.filter(user=request.user)
             .values(NAME)
@@ -190,11 +189,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         text = 'Список покупок:\n'
         for i in ingerdients_in_cart:
             text += f'{i[NAME]} ({i[UNIT]}) - {i["weight"]} \n'.capitalize()
-        response = HttpResponse(
+        return HttpResponse(
             text,
             headers={
                 'Content-Type': 'text/plain; charset=UTF-8',
                 'Content-Disposition': f'attachment; filename="{FILENAME}"',
             },
         )
-        return response
