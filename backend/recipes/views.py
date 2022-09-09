@@ -11,15 +11,10 @@ from rest_framework.serializers import ValidationError
 from .filters import RecipeFilter
 from .models import Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag
 from .permissions import IsAdminOrReadOnly, IsOwnerOrAdminOrReadOnly
-from .serializers import (
-    IS_FAVORITED,
-    IS_IN_SHOPPING_CART,
-    FavoriteSerializer,
-    IngredientSerializer,
-    RecipeListSerializer,
-    RecipeSerializer,
-    TagSerializer,
-)
+from .serializers import (IS_FAVORITED, IS_IN_SHOPPING_CART,
+                          FavoriteSerializer, IngredientSerializer,
+                          RecipeListSerializer, RecipeSerializer,
+                          TagSerializer)
 
 FILENAME = 'shopping_cart.txt'
 NAME = 'recipe__recipe_ingredients__ingredient__name'
