@@ -5,3 +5,6 @@ Cайт, на котором пользователи будут публико�
 ### Технологии в проекте ###
 
 `REST API`, `Python 3`, `Django`, `Django REST Framework`, `PostgreSQL`, `Nginx`, `Docker`, `CI/CD`
+
+### Адрес сайта ###
+http://foodgram-lozhkinea.serveblog.net/
