@@ -138,6 +138,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 6,
+    'SEARCH_PARAM': 'name',
 }
 
 
@@ -151,7 +152,4 @@ DJOSER = {
     },
 }
 
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost',
-    'http://foodgram-lozhkinea.serveblog.net',
-]
+CSRF_TRUSTED_ORIGINS = ['http://foodgram-lozhkinea.serveblog.net']
