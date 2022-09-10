@@ -1,8 +1,8 @@
 from djoser import serializers as ds
+from recipes.models import Recipe
 from rest_framework import serializers
 
-from recipes.models import Recipe  # noqa: I001
-from users.models import User
+from .models import User
 
 
 class UserCreateSerializer(ds.UserCreateSerializer):

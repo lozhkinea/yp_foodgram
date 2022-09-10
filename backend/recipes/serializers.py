@@ -1,9 +1,9 @@
 from rest_framework import serializers
-
-from recipes.fields import Base64ImageField
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
 from users.serializers import UserSerializer
+
+from .fields import Base64ImageField
+from .models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                     ShoppingCart, Tag)
 
 IS_FAVORITED = 'is_favorited'
 IS_IN_SHOPPING_CART = 'is_in_shopping_cart'

@@ -20,7 +20,6 @@ FILENAME = 'shopping_cart.txt'
 NAME = 'recipe__recipe_ingredients__ingredient__name'
 UNIT = 'recipe__recipe_ingredients__ingredient__measurement_unit'
 AMOUNT = 'recipe__recipe_ingredients__amount'
-TAG = 'tags'
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -54,8 +53,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Recipe.objects.none()
 
     def get_queryset(self):
-        if self.request.query_params.get(TAG) is None:
-            return Recipe.objects.none()
         queryset = Recipe.objects.all()
         for key in (IS_FAVORITED, IS_IN_SHOPPING_CART):
             if self.request.query_params.get(key):
