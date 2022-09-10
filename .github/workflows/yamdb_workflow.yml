@@ -11,7 +11,7 @@ jobs:
     - name: Set up Python 
       uses: actions/setup-python@v2
       with:
-        python-version: 3.10.7
+        python-version: 3.10.6
 
     - name: Install dependencies
       run: |
@@ -21,6 +21,7 @@ jobs:
 
     - name: Test with flake8
       run: |
+        cd backend
         python -m flake8
 
   build_and_push_to_docker_hub:

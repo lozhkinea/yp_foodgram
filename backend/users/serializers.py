@@ -1,8 +1,9 @@
 from djoser import serializers as ds
-from recipes.models import Recipe
 from rest_framework import serializers
 
-from .models import User
+from recipes.models import Recipe
+
+from .models import Subscription, User
 
 
 class UserCreateSerializer(ds.UserCreateSerializer):
@@ -36,7 +37,7 @@ class UserSerializer(ds.UserSerializer):
         return (
             (user := self.context['request'].user)
             and user.is_authenticated
-            and user.subscribes.filter(author=obj).exists()
+            and Subscription.objects.filter(user=user, author=obj).exists()
         )
 
 
