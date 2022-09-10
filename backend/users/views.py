@@ -49,7 +49,9 @@ class UserViewSet(views.UserViewSet):
     def subscriptions(self, request):
         subscribes = User.objects.filter(subscribes__user=request.user).all()
         page = self.paginate_queryset(subscribes)
-        serializer = SubscriptionSerializer(page, many=True)
+        serializer = SubscriptionSerializer(
+            page, many=True, context={'request': request}
+        )
         recipes_limit = request.query_params.get('recipes_limit')
         if recipes_limit is not None:
             recipes_limit = int(recipes_limit)
