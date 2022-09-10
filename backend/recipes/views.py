@@ -4,12 +4,12 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
 from .filters import RecipeFilter
 from .models import Ingredient, Recipe, RecipeIngredient, ShoppingCart, Tag
+from .pagination import RecipesPagination
 from .permissions import IsAdminOrReadOnly, IsOwnerOrAdminOrReadOnly
 from .serializers import (IS_FAVORITED, IS_IN_SHOPPING_CART,
                           FavoriteSerializer, IngredientSerializer,
@@ -20,6 +20,7 @@ FILENAME = 'shopping_cart.txt'
 NAME = 'recipe__recipe_ingredients__ingredient__name'
 UNIT = 'recipe__recipe_ingredients__ingredient__measurement_unit'
 AMOUNT = 'recipe__recipe_ingredients__amount'
+TAG = 'tags'
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -39,7 +40,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    pagination_class = LimitOffsetPagination
+    pagination_class = RecipesPagination
     permission_classes = (IsOwnerOrAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
@@ -53,6 +54,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Recipe.objects.none()
 
     def get_queryset(self):
+        if self.request.query_params.get(TAG) is None:
+            return Recipe.objects.none()
         queryset = Recipe.objects.all()
         for key in (IS_FAVORITED, IS_IN_SHOPPING_CART):
             if self.request.query_params.get(key):
