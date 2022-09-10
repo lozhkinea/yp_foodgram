@@ -1,7 +1,7 @@
 from djoser import serializers as ds
 from rest_framework import serializers
-                                                                  # noqa: I004
-from recipes.models import Recipe                                 # noqa: I001
+
+from recipes.models import Recipe
 from users.models import User
 
 

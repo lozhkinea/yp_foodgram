@@ -1,5 +1,5 @@
-from rest_framework import serializers                            # noqa: I001
-                                                                  # noqa: I004
+from rest_framework import serializers  # noqa: I001
+
 from recipes.fields import Base64ImageField
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
