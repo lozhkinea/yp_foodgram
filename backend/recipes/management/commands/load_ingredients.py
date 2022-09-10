@@ -6,6 +6,7 @@ from pathlib import Path
 
 from django.core.management.base import BaseCommand, CommandError
 
+# noqa: I004
 from recipes.models import Ingredient
 
 COL1 = 'name'
