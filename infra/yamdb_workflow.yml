@@ -29,6 +29,7 @@ jobs:
         SECRET_KEY: ${{ secrets.SECRET_KEY }}
         DEBUG: ${{ secrets.DEBUG }}
       run: |
+        cd backend
         python manage.py test
 
   # build_and_push_to_docker_hub:
