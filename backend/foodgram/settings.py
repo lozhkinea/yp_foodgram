@@ -1,6 +1,13 @@
 from os import getenv
 from pathlib import Path
 
+# Run outside a container
+if getenv('DEBUG') is None:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -139,6 +146,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 6,
     'SEARCH_PARAM': 'name',
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
 
 
