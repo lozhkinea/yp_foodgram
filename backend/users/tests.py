@@ -3,7 +3,7 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase
 
 
-class BaseUserTestCase(APITestCase):
+class UserBaseTestCase(APITestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -28,7 +28,7 @@ class BaseUserTestCase(APITestCase):
         self.client.credentials()
 
 
-class UserRegistrationTestCase(BaseUserTestCase):
+class UserRegistrationTestCase(UserBaseTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -56,7 +56,7 @@ class UserRegistrationTestCase(BaseUserTestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
-class UserAuthTestCase(BaseUserTestCase):
+class UserAuthTestCase(UserBaseTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -99,12 +99,12 @@ class UserAuthTestCase(BaseUserTestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
-class UserTestCase(BaseUserTestCase):
+class UserDetailTestCase(UserBaseTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.RESPONSE_DATA_LENGTH = 6
-        cls.data_keys = ('count', 'next', 'previous', 'results')
+        cls.IS_SUBSCRIBED_DEFAULT = False
         cls.url_current_user = cls.url + 'me/'
 
     def setUp(self):
@@ -130,7 +130,9 @@ class UserTestCase(BaseUserTestCase):
                 self.assertIn('id', response.data)
                 self.assertEqual(response.data['id'], self.user_id)
                 self.assertIn('is_subscribed', response.data)
-                self.assertEqual(response.data['is_subscribed'], False)
+                self.assertEqual(
+                    response.data['is_subscribed'], self.IS_SUBSCRIBED_DEFAULT
+                )
 
     def test_unauthorized_user_profile(self):
         self._unauthorize()
@@ -145,25 +147,75 @@ class UserTestCase(BaseUserTestCase):
         response = self.client.get(self.url_detail_non_exist)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_users_list(self):
+
+class ManyUserTestCase(UserBaseTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.RESPONSE_DATA_LENGTH = 4
+        cls.RESULT_DETAIL_LENGTH = 6
+        cls.IS_SUBSCRIBED_DEFAULT = False
+        cls.PAGE_SIZE = 6
+        cls.USERS_COUNT = 7
+        cls.data_keys = ('count', 'next', 'previous', 'results')
+
+    def setUp(self):
+        response = self.client.post(self.url, self.user_data)
+        self.user_id = response.data['id']
+        self._authorize()
+
+    def _create_users(self, count):
+        for i in range(count):
+            data = {
+                **self.user_data,
+                'username': f'user{i}',
+                'email': f'user{i}@ya.ru',
+            }
+            self.client.post(self.url, data)
+
+    def test_few_users_list(self):
+        few_count = 2
+        self._create_users(few_count)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), len(self.data_keys))
         for key in self.data_keys:
             self.assertIn(key, response.data)
-        self.assertEqual(len(response.data['results']), 1)
-        item = response.data['results'][0]
-        self.assertEqual(len(item), self.RESPONSE_DATA_LENGTH)
+        self.assertEqual(len(response.data['results']), few_count + 1)
+
+    def test_users_list(self):
+        self._create_users(self.USERS_COUNT)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), len(self.data_keys))
+        for key in self.data_keys:
+            self.assertIn(key, response.data)
+        self.assertEqual(len(response.data['results']), self.PAGE_SIZE)
+
+    def test_users_list_limit(self):
+        limit_size = 5
+        self._create_users(self.USERS_COUNT)
+        response = self.client.get(f'{self.url}?limit={limit_size}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), len(self.data_keys))
+        for key in self.data_keys:
+            self.assertIn(key, response.data)
+        self.assertEqual(len(response.data['results']), limit_size)
+
+    def test_users_list_result_detail(self):
+        response = self.client.get(self.url)
+        result = response.data['results'][0]
+        self.assertEqual(len(result), self.RESULT_DETAIL_LENGTH)
         for key in self.data:
-            self.assertIn(key, item)
-            self.assertEqual(item[key], self.user_data[key])
-        self.assertIn('id', item)
-        self.assertEqual(item['id'], self.user_id)
-        self.assertIn('is_subscribed', item)
-        self.assertEqual(item['is_subscribed'], False)
+            self.assertIn(key, result)
+            self.assertEqual(result[key], self.data[key])
+        self.assertIn('id', result)
+        self.assertEqual(result['id'], self.user_id)
+        self.assertIn('is_subscribed', result)
+        self.assertEqual(result['is_subscribed'], self.IS_SUBSCRIBED_DEFAULT)
 
 
-class SubscriptionTestCase(BaseUserTestCase):
+class SubscriptionTestCase(UserBaseTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -213,8 +265,10 @@ class SubscriptionTestCase(BaseUserTestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_unauthorized_subscribe(self):
-        url = reverse('users:user-detail', kwargs={'id': self.second_user_id})
-        url = f'{url}subscribe/'
+        url = (
+            reverse('users:user-detail', kwargs={'id': self.second_user_id})
+            + 'subscribe/'
+        )
         self.client.credentials()
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
