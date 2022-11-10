@@ -5,17 +5,30 @@ from rest_framework.test import APITestCase
 from .models import Ingredient, Tag
 
 
-class TagsTestCase(APITestCase):
+class RecipeBaseTestCase(APITestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.RESPONSE_DATA_LENGTH = 4
         cls.tags = [
             {'name': 'Завтрак', 'color': '#E26C2D', 'slug': 'breakfast'},
             {'name': 'Обед', 'color': '#E26C2D', 'slug': 'lunch'},
             {'name': 'Ужин', 'color': '#E26C2D', 'slug': 'dinner'},
         ]
         Tag.objects.bulk_create([Tag(**tag) for tag in cls.tags])
+        cls.ingredients = [
+            {'name': 'абрикосы', 'measurement_unit': 'г'},
+            {'name': 'абрикосовый сок', 'measurement_unit': 'стакан'},
+        ]
+        Ingredient.objects.bulk_create(
+            [Ingredient(**ingredient) for ingredient in cls.ingredients]
+        )
+
+
+class TagsTestCase(RecipeBaseTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.RESPONSE_DATA_LENGTH = 4
         cls.url_list = reverse('recipes:tag-list')
         cls.url_detail = reverse('recipes:tag-detail', kwargs={'pk': 1})
         cls.url_detail_non_exist = reverse(
@@ -48,18 +61,11 @@ class TagsTestCase(APITestCase):
             self.assertEqual(self.data_error[key], response.data[key])
 
 
-class IngredientsTestCase(APITestCase):
+class IngredientsTestCase(RecipeBaseTestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.RESPONSE_DATA_LENGTH = 3
-        cls.ingredients = [
-            {'name': 'абрикосы', 'measurement_unit': 'г'},
-            {'name': 'абрикосовый сок', 'measurement_unit': 'стакан'},
-        ]
-        Ingredient.objects.bulk_create(
-            [Ingredient(**ingredient) for ingredient in cls.ingredients]
-        )
         cls.url_list = reverse('recipes:ingredient-list')
         cls.url_detail = reverse('recipes:ingredient-detail', kwargs={'pk': 1})
         cls.url_search = cls.url_list + '?name=абрикос'
@@ -92,9 +98,3 @@ class IngredientsTestCase(APITestCase):
         for key in self.ingredients[0]:
             self.assertIn(key, response.data[0])
         self.assertIn('id', response.data[0])
-
-
-class RecipeBaseTestCase(APITestCase):
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
